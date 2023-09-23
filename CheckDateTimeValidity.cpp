@@ -1,46 +1,90 @@
-void CheckDateTimeValidity(const DateTime& dt) {
+enum class TimeValidityError {
+  OK,
+  YEAR_TOO_SMALL,
+  YEAR_TOO_BIG,
+  MONTH_TOO_SMALL,
+  MONTH_TOO_BIG,
+  DAY_TOO_SMALL,
+  DAY_TOO_BIG,
+  HOUR_TOO_SMALL,
+  HOUR_TOO_BIG,
+  MINUTES_TOO_BIG,
+  MINUTES_TOO_SMALL,
+  SECONDS_TOO_BIG,
+  SECONDS_TOO_SMALL,
+};
+inline constexpr bool IsError(TimeValidityError error) {
+  return error != TimeValidityError::OK;
+}
+const std::string_view ErrorMessage(TimeValidityError error) {
+  static constexpr std::string_view ERROR_MESSAGES[] = {
+    "no error",
+    "year is too small",
+    "year is too big",
+    "month is too small",
+    "month is too big",
+    "day is too small",
+    "day is too big",
+    "hour is too small",
+    "hour is too big",
+    "minute is too small",
+    "minute is too big",
+    "second is too small",
+    "second is too big",
+  };
+  return ERROR_MESSAGES(error);
+}
+
+TimeValidityError CheckDateTimeValidityNoExcept(const DateTime& dt) {
     if (dt.year < 1) {
-        throw domain_error("year is too small"s);
+        return TimeValidityError::YEAR_TOO_SMALL;
     }
     if (dt.year > 9999) {
-        throw domain_error("year is too big"s);
+        return TimeValidityError::YEAR_TOO_BIG;
     }
 
     if (dt.month < 1) {
-        throw domain_error("month is too small"s);
+       return TimeValidityError::MONTH_TOO_SMALL;
     }
     if (dt.month > 12) {
-        throw domain_error("month is too big"s);
+       return TimeValidityError::MONTH_TOO_BIG;
     }
 
     const bool is_leap_year = (dt.year % 4 == 0) && !(dt.year % 100 == 0 && dt.year % 400 != 0);
     const array month_lengths = {31, 28 + is_leap_year, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
     if (dt.day < 1) {
-        throw domain_error("day is too small"s);
+        return TimeValidityError::DAY_TOO_SMALL;
     }
     if (dt.day > month_lengths[dt.month - 1]) {
-        throw domain_error("day is too big"s);
+       return TimeValidityError::DAY_TOO_BIG;
     }
 
     if (dt.hour < 0) {
-        throw domain_error("hour is too small"s);
+        return TimeValidityError::HOUR_TOO_SMALL;
     }
     if (dt.hour > 23) {
-        throw domain_error("hour is too big"s);
+       return TimeValidityError::HOUR_TOO_BIG;
     }
 
     if (dt.minute < 0) {
-        throw domain_error("minute is too small"s);
+        return TimeValidityError::MINUTES_TOO_SMALL;
     }
     if (dt.minute > 59) {
-        throw domain_error("minute is too big"s);
+        return TimeValidityError::MINUTES_TOO_BIG;
     }
 
     if (dt.second < 0) {
-        throw domain_error("second is too small");
+        return TimeValidityError::SECONDS_TOO_SMALL;
     }
     if (dt.second > 59) {
-        throw domain_error("second is too big"s);
+        return TimeValidityError::SECONDS_TOO_BIG;
+    }
+}
+
+TimeValidityError CheckDateTimeValidity(const DateTime& dt) {
+    auto error = IsTimeValid(dt);
+    if (IsError(error)) {
+         throw ErrorMessage(error);
     }
 }
